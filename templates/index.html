@@ -1,0 +1,618 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" sizes="76x76" href="{% static 'assets/img/apple-touch-icon.png' %}">
+  <link rel="icon" type="image/png" href="{% static 'assets/img/apple-touch-icon.png' %}">
+  
+  <title>
+    RepoAtlas
+  </title>
+  <!--     Fonts and icons     -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet" />
+  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+  <!-- Nucleo Icons -->
+ 
+  <link href="{% static '/assets/css/nucleo-icons.css' %}" rel="stylesheet" />
+  <!-- CSS Files -->
+  <link href="{% static 'assets/css/blk-design-system.css' %}?v=1.0.0" rel="stylesheet" />
+  <!-- CSS Just for demo purpose, don't include it in your project -->
+  <link href="{% static '/assets/demo/demo.css' %}" rel="stylesheet" />
+</head>
+
+<body class="index-page">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top navbar-transparent " color-on-scroll="100">
+    <div class="container">
+      <div class="navbar-translate">
+        <a class="navbar-brand" href="" rel="tooltip" title="Built by RepoAtlas Team" data-placement="bottom" target="_blank">
+          Repo<span>Atlas</span>
+        </a>
+        <button class="navbar-toggler navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-bar bar1"></span>
+          <span class="navbar-toggler-bar bar2"></span>
+          <span class="navbar-toggler-bar bar3"></span>
+        </button>
+      </div>
+      <div class="collapse navbar-collapse justify-content-end" id="navigation">
+        <div class="navbar-collapse-header">
+          <div class="row">
+            <div class="col-6 collapse-brand">
+              <a>
+                RepoAtlas
+              </a>
+            </div>
+            <div class="col-6 collapse-close text-right">
+              <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="tim-icons icon-simple-remove"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <ul class="navbar-nav">
+          <li class="nav-item p-0">
+            <a class="nav-link" rel="tooltip" title="RepoAtlas" data-placement="bottom" href="#" target="_blank">
+              <i class="fab fa-linkedin"></i>
+              <p class="d-lg-none d-xl-none">Linked In</p>
+            </a>
+          </li>
+           <li class="nav-item p-0">
+            <a class="nav-link" rel="tooltip" title="RepoAtlas" data-placement="bottom" href="#" target="_blank">
+              <i class="fab fa-linkedin"></i>
+              <p class="d-lg-none d-xl-none">Linked In</p>
+            </a>
+          </li>
+       <!-- Bootstrap CSS -->
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+          <li class="dropdown nav-item">
+            <a href="" class="dropdown-toggle nav-link" data-toggle="dropdown">
+              <i class="fa fa-cogs d-lg-none d-xl-none"></i> Getting started
+            </a>
+            <div class="dropdown-menu dropdown-with-icons">
+              <a href="/emmuai" class="dropdown-item">
+                <i class="tim-icons icon-paper"></i> EmmuAI
+              </a>
+              <a href="/generate_pdf1" class="dropdown-item">
+                <i class="tim-icons icon-bullet-list-67"></i>Select Repo
+              </a>
+              <a href="/sherwinai" class="dropdown-item">
+                <i class="tim-icons icon-image-02"></i>SherwinAI
+              </a>
+             
+            </div>
+          </li>
+          <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+          <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+          <!-- Latest compiled and minified JavaScript -->
+
+
+      <li class="nav-item">
+  <a class="nav-link btn btn-default d-none d-lg-block" href="/substack">
+    <i class="tim-icons icon-cloud-download-93"></i> Sign Up
+  </a>
+</li>
+
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  
+  <!-- End Navbar -->
+  <div class="wrapper">
+    <div class="page-header header-filter">
+      <div class="squares square1"></div>
+      <div class="squares square2"></div>
+      <div class="squares square3"></div>
+      <div class="squares square4"></div>
+      <div class="squares square5"></div>
+      <div class="squares square6"></div>
+      <div class="squares square7"></div>
+      <div class="wrapper">
+        <div class="wrapper">
+          <div class="page-header header-filter">
+            <div class="container">
+              <div class="content-center">
+                <h1 style="font-weight: bold; font-size: 68px; color: #FFFFFF;">RepoAtlas</h1>
+                <h4 style="color: #FFFFFF" class="display-4">Your AI coding guru that explains code and generates documentation for your codebase.</h4>
+                <!-- Subscription Form -->
+           
+            
+                <form method="post" action="{% url 'subscribe' %}" onsubmit="return validateForm()">
+                  {% csrf_token %}
+                 
+                  <div class="form-group">
+                    <center>
+                    <input type="email" name="email" class="form-control shorter-width" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
+                    <small id="emailHelp" class="form-text text-muted">Get early access & updates :)</small>
+                  </center> </div>
+                  <button type="submit" class="btn btn-primary ">Subscribe</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <style>
+          .shorter-width {
+  width: 400px; /* Adjust the width as needed */
+}
+        </style>
+      
+<script>
+  function validateForm() {
+      var emailInput = document.getElementById("exampleInputEmail1").value;
+      if (emailInput.trim() === "") {
+          alert("Please fill in your email address.");
+          return false; // Prevent form submission
+      }
+      return true; // Allow form submission
+  }
+  </script>
+
+    </div>
+  </div>
+</div>
+<!-- Email Form -->
+
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Thank You bhai :D</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+              <!-- Display messages received -->
+              {% if messages %}
+              <div>
+                  {% for message in messages %}
+                  
+                  <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">
+                      {{ message }}
+
+                  </div>
+                  <img src="https://c.tenor.com/FawYo00tBekAAAAC/tenor.gif" alt="Loading GIF">
+
+                  {% endfor %}
+              </div>
+              {% endif %}
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+      </div>
+  </div>
+</div>
+        <!-- <img src="{% static 'assets/img/blob.png' %}" class="path">
+        <img src="{% static 'assets/img/path2.png' %}" class="path2">
+        <img src="{% static 'assets/img/triunghiuri.png' %}" class="shapes triangle">
+        <img src="{% static 'assets/img/waves.png' %}" class="shapes wave">
+        <img src="{% static 'assets/img/patrat.png' %}" class="shapes squares">
+        <img src="{% static 'assets/img/cercuri.png' %}" class="shapes circle"> -->
+ 
+        <section class="section" style="padding: 40px 0;">
+          <div class="container">
+            <h2 class="text-center mb-4">Explore Features</h2>
+            <div class="row justify-content-center">
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/generate_pdf1" class="btn btn-primary btn-block btn-lg">
+                  <i class="tim-icons icon-bullet-list-67"></i> Select Repo
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/gemini" class="btn btn-info btn-block btn-lg">
+                  <i class="tim-icons icon-chat-33"></i> RepoAtlas
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/emmuai/" class="btn btn-success btn-block btn-lg">
+                  <i class="tim-icons icon-paper"></i> EmmuAI
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/sherwinai/" class="btn btn-warning btn-block btn-lg">
+                  <i class="tim-icons icon-image-02"></i> SherwinAI
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/profile_analysis" class="btn btn-danger btn-block btn-lg">
+                  <i class="tim-icons icon-single-02"></i> Profile Analysis
+                </a>
+              </div>
+              <div class="col-md-4 col-sm-6 mb-3">
+                <a href="/user_signin" class="btn btn-default btn-block btn-lg">
+                  <i class="tim-icons icon-lock-circle"></i> Sign In
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section section-lg section-safe">
+          <img src="{% static 'assets/img/path5.png' %}" class="path">
+          <div class="container">
+            <div class="row row-grid justify-content-between">
+              <div class="col-md-5">
+                <img src="{% static 'assets/img/wallpaper.jpeg' %}" class="img-fluid floating">
+                <div class="card card-stats bg-danger">
+                  <div class="card-body">
+                    <div class="justify-content-center">
+                      <div class="numbers">
+                        <p class="card-title">Play</p>
+                        <p class="card-category text-white">CodePlay 🎮</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card card-stats bg-info">
+                  <div class="card-body">
+                    <div class="justify-content-center">
+                      <div class="numbers">
+                        <p class="card-title">Fast</p>
+                        <p class="card-category text-white">Interactive Query Resolution
+
+
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="card card-stats bg-default">
+                  <div class="card-body">
+                    <div class="justify-content-center">
+                      <div class="numbers">
+                        <p class="card-category text-white">Code Visualizer🔥
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="px-md-5">
+                  <hr class="line-success">
+                  <h3>Awesome features</h3>
+                  <p>
+                    "RepoAtlas" is an <bold>AI-powered coding companion </bold> that effortlessly generates professional documentation, resolves coding doubts interactively, and provides targeted code solutions tailored to your project's context, streamlining your development workflow and enhancing productivity.</p>
+                  <ul class="list-unstyled mt-5">
+                    <li class="py-2">
+                      <div class="d-flex align-items-center">
+                        <div class="icon icon-success mb-2">
+                          <i class="tim-icons icon-vector"></i>
+                        </div>
+                        <div class="ml-3">
+                          <h6>Professional Documentation Generation</h6>
+                        </div>
+                      </div>
+                    </li>
+                    <li class="py-2">
+                      <div class="d-flex align-items-center">
+                        <div class="icon icon-success mb-2">
+                          <i class="tim-icons icon-tap-02"></i>
+                        </div>
+                        <div class="ml-3">
+                          <h6>Targeted Repo Code Generation</h6>
+                        </div>
+                      </div>
+                    </li>
+                    <li class="py-2">
+                      <div class="d-flex align-items-center">
+                        <div class="icon icon-success mb-2">
+                          <i class="tim-icons icon-single-02"></i>
+                        </div>
+                        <div class="ml-3">
+                          <h6>Interactive Doubt Resolution/Generation Code</h6>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="container">
+            <h1 style="text-align: center;">Check this out!</h1>
+            <style>
+              .fixed-size-img {
+                  width: 100%;  /* Adjust width to 100% of the column */
+                  height: 100%; /* Allows images to maintain their aspect ratio */
+                  object-fit: cover; /* Ensures the image covers the area, cropping as necessary */
+                  transition: transform 0.3s ease; /* Smooth transition for hover effect */
+                  cursor: pointer; /* Change cursor to pointer on hover */
+              }
+      
+              .fixed-size-img:hover {
+                  transform: scale(1.05); /* Scale up image slightly on hover */
+              }
+          </style>
+          <style>
+            .image-container {
+              position: relative;
+              width: 100%;
+            }
+          
+            .image-container img {
+              width: 100%;
+              height: auto;
+              display: block;
+              transition: transform 0.5s ease;
+            }
+          
+            .image-container .description {
+              position: absolute;
+              bottom: 0;
+              background: rgba(0, 0, 0, 0.5); /* Black background with opacity */
+              color: #fff;
+              width: 100%;
+              text-align: center;
+              padding: 10px;
+              opacity: 0;
+              transition: opacity 0.5s ease;
+              transform: translateY(100%);
+            }
+          
+            .image-container:hover .description {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          
+            .image-container:hover img {
+              transform: scale(1.1);
+            }
+          </style>
+          
+      </head>
+      <body>
+          <div class="row">
+              <!-- Image 1 -->
+              <div class="col-md-4">
+                <p style="text-align:center";>Select Your Repository</p>
+
+                  <img src="{% static 'assets/img/selectrepo.png' %}" class="img-fluid floating fixed-size-img" alt="desc1" onclick="showImage(this)">
+              </div>
+              <!-- Image 2 -->
+
+              <div class="col-md-4">
+                <p style="text-align:center";>Talk To Your Code</p>
+                <img src="{% static 'assets/img/gemini.png' %}" class="img-fluid floating fixed-size-img" alt="Image 4" onclick="showImage(this)">
+
+              </div>
+              <!-- Image 3 -->
+
+              <div class="col-md-4">
+                <p style="text-align:center";>Play with your code</p>
+
+                  <img src="{% static 'assets/img/EmmuAI.png' %}" class="img-fluid floating fixed-size-img" alt="Image 3" onclick="showImage(this)">
+              </div>
+              </div>
+
+              <br>
+              <br>
+              <br>
+
+
+              <div class="row">
+
+              <!-- Image 4 -->
+
+              <div class="col-md-4">
+                <p style="text-align:center";>Devin AI for UI</p>
+
+                <img src="{% static 'assets/img/SherwinAI.png' %}" class="img-fluid floating fixed-size-img" alt="Image 2" onclick="showImage(this)">
+              </div>
+              <!-- Image 5 -->
+
+              <div class="col-md-4">
+                <p style="text-align:center";>Visualize Codebase</p>
+
+                  <img src="{% static 'assets/img/visualize.png' %}" class="img-fluid floating fixed-size-img" alt="Image 5" onclick="showImage(this)">
+              </div>
+              <!-- Image 6 -->
+
+              <div class="col-md-4">
+                <p style="text-align:center";>Visualize Codebase</p>
+
+                  <img src="{% static 'assets/img/visualize2.png' %}" class="img-fluid floating fixed-size-img" alt="Image 6" onclick="showImage(this)">
+              </div>
+          </div>
+   <!-- Hidden modal for displaying enlarged image -->
+<div id="imageModal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-body">
+              <img src="" class="img-fluid" id="modalImage">
+          </div>
+      </div>
+  </div>
+</div>
+
+      
+          <script>
+              function showImage(element) {
+                  // Get the image source
+                  var imageSrc = element.src;
+      
+                  // Set the source of the modal image
+                  document.getElementById("modalImage").src = imageSrc;
+      
+                  // Show the modal
+                  $('#imageModal').modal('show');
+              }
+          </script>
+      
+          <!-- Bootstrap and jQuery libraries -->
+          <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+          <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+              </div>
+          </div>
+      </section>
+      
+        <section class="section section-lg">
+          <section class="section">
+            <!-- <img src="{% static 'assets/img/path4.png' %}" class="path"> -->
+            <div class="container">
+              <center><h3> Implementation ;) </h3></center>
+        
+              <div class="row row-grid justify-content-between">
+                <div class="row">
+                  <!-- Video Embedding -->
+                  <video id="myVideo" width="100%" height="auto" controls>
+                    <source src="{% static 'assets/video.mp4' %}" type="video/mp4">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+    </div>
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-3">
+            <h1 class="title">RepoAtlas</h1>
+          </div>
+          
+          <!-- <div class="col-md-3">
+            <ul class="nav">
+              <li class="nav-item">
+                <a href="./index.html" class="nav-link">
+                  Home
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./examples/landing-page.html" class="nav-link">
+                  Landing
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./examples/register-page.html" class="nav-link">
+                  Register
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="./examples/profile-page.html" class="nav-link">
+                  Profile
+                </a>
+              </li>
+            </ul>
+          </div> -->
+          <div class="col-md-3">
+            <ul class="nav">
+              <li class="nav-item">
+                <a href="" class="nav-link">
+                  Contact Us - 
+                 <br>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="https://www.linkedin.com/feed/update/urn:li:activity:7167872040169861120/" class="nav-link">
+                  About Us
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="#" class="nav-link">
+                  Blog
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="" class="nav-link">
+                  RepoAtlas
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="col-md-3">
+            <h3 class="title">Follow us:</h3>
+            <div class="btn-wrapper profile">
+              <a target="_blank" href="https://github.com/RepoAtlas" class="btn btn-icon btn-neutral btn-round btn-simple" data-toggle="tooltip" data-original-title="dev2 github">
+                <i class="fab fa-github"></i>
+              </a>
+              <a target="_blank" href="https://github.com/RepoAtlas" class="btn btn-icon btn-neutral btn-round btn-simple" data-toggle="tooltip" data-original-title="dev1 github">
+                <i class="fab fa-github"></i>
+              </a>
+              <a target="_blank" href="#" class="btn btn-icon btn-neutral  btn-round btn-simple" data-toggle="tooltip" data-original-title="Follow us">
+                <i class="fab fa-linkedin"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+  <!--   Core JS Files   -->
+  <script src="{% static '/assets/js/core/jquery.min.js' %}" type="text/javascript"></script>
+  <script src="{% static '/assets/js/core/popper.min.js' %}" type="text/javascript"></script>
+  <script src="{% static '/assets/js/core/bootstrap.min.js' %}" type="text/javascript"></script>
+  <script src="{% static '/assets/js/plugins/perfect-scrollbar.jquery.min.js' %}"></script>
+  <!--  Plugin for Switches, full documentation here: http://www.jque.re/plugins/version3/bootstrap.switch/ -->
+  <script src="{% static '/assets/js/plugins/bootstrap-switch.js' %}"></script>
+  <!--  Plugin for the Sliders, full documentation here: http://refreshless.com/nouislider/ -->
+  <script src="{% static '/assets/js/plugins/nouislider.min.js' %}" type="text/javascript"></script>
+  <!-- Chart JS -->
+  <script src="{% static '/assets/js/plugins/chartjs.min.js' %}"></script>
+  <!--  Plugin for the DatePicker, full documentation here: https://github.com/uxsolutions/bootstrap-datepicker -->
+  <script src="{% static '/assets/js/plugins/moment.min.js' %}"></script>
+  <script src="{% static '/assets/js/plugins/bootstrap-datetimepicker.js'%}" type="text/javascript"></script>
+
+  <!-- Black Dashboard DEMO methods, don't include it in your project! -->
+  <script src="{% static '/assets/demo/demo.js'%}"></script>
+  <!-- Control Center for Black UI Kit: parallax effects, scripts for the example pages etc -->
+  <script src="{% static '/assets/js/blk-design-system.min.js?v=1.0.0' %}" type="text/javascript"></script>
+  <script>
+    $(document).ready(function() {
+      blackKit.initDatePicker();
+      blackKit.initSliders();
+    });
+
+    function scrollToDownload() {
+
+      if ($('.section-download').length != 0) {
+        $("html, body").animate({
+          scrollTop: $('.section-download').offset().top
+        }, 1000);
+      }
+    }
+  </script>
+{% if messages %}
+<script type="text/javascript">
+$(document).ready(function(){
+    // Check if there are messages and show the modal
+    $('#exampleModal').modal('show');
+});
+</script>
+{% endif %}
+<script>
+  // Function to scroll to the video section
+  function scrollToVideo() {
+    // Get the position of the video section
+    const videoSection = document.getElementById('myVideo');
+    const videoSectionPosition = videoSection.offsetTop;
+
+    // Scroll to the video section
+    window.scrollTo({
+      top: videoSectionPosition,
+      behavior: 'smooth' // Smooth scrolling
+    });
+  }
+</script>
+</body>
+
+</html>
