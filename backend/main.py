@@ -104,20 +104,32 @@ async def analyze(req: AnalyzeRequest):
 @app.post("/api/query")
 async def query(req: QueryRequest):
     repo_url = req.repo_url.strip().rstrip("/")
-    # Auto re-analyze if cache was lost (e.g. server restart)
     if repo_url not in _cache:
         await analyze(AnalyzeRequest(repo_url=repo_url))
     result = _cache[repo_url]
 
-    # Try AI-powered query first
+    import json as _json, re as _re
+
+    # Build rich context: file list + summaries
+    file_lines = []
+    for n in result["nodes"]:
+        summary = n.get("summary", "")
+        funcs = ", ".join(n.get("functions", [])[:8])
+        file_lines.append(f"- {n['id']} (type={n['type']}, loc={n['loc']}, funcs=[{funcs}]){': ' + summary if summary else ''}")
+    file_context = "\n".join(file_lines[:200])
+
     if genai_client:
         try:
-            file_list = "\n".join([f"- {n['id']} ({n['type']})" for n in result["nodes"][:100]])
             prompt = (
-                f"Given this list of files in a codebase:\n{file_list}\n\n"
-                f"The user asks: \"{req.query}\"\n\n"
-                f"Return ONLY a JSON array of file paths (from the list above) most relevant to this query. "
-                f"Return at most 15 files. Example: [\"src/auth.py\", \"src/login.js\"]"
+                f"You are an expert code assistant helping a developer understand a codebase.\n"
+                f"Here is the list of files with their types, line counts, key functions, and AI summaries:\n\n"
+                f"{file_context}\n\n"
+                f"Developer question: \"{req.query}\"\n\n"
+                f"Respond with a JSON object with exactly two keys:\n"
+                f"1. \"answer\": a clear, helpful 3-6 sentence explanation answering the question\n"
+                f"2. \"files\": a JSON array of the most relevant file paths from the list above (max 15)\n"
+                f"Example: {{\"answer\": \"Auth is handled in...\", \"files\": [\"src/auth.py\"]}}\n"
+                f"Return ONLY the JSON object, no markdown fences."
             )
             resp = await asyncio.to_thread(
                 genai_client.models.generate_content,
@@ -125,16 +137,21 @@ async def query(req: QueryRequest):
                 contents=prompt,
             )
             text = resp.text.strip()
-            import json, re
-            match = re.search(r'\[.*?\]', text, re.DOTALL)
-            if match:
-                highlighted = json.loads(match.group())
-                return {"highlighted": highlighted, "query": req.query}
-        except Exception:
+            # Strip markdown code fences if present
+            text = re.sub(r'^```(?:json)?\s*', '', text, flags=_re.MULTILINE)
+            text = re.sub(r'```\s*$', '', text, flags=_re.MULTILINE).strip()
+            parsed = _json.loads(text)
+            return {
+                "answer": parsed.get("answer", ""),
+                "highlighted": parsed.get("files", []),
+                "query": req.query,
+            }
+        except Exception as e:
+            # Fallback: keyword match + no answer
             pass
 
     highlighted = nl_query_subgraph(req.query, result["nodes"], result["edges"])
-    return {"highlighted": highlighted, "query": req.query}
+    return {"answer": "", "highlighted": highlighted, "query": req.query}
 
 @app.post("/api/summary")
 async def get_summary(req: SummaryRequest):
