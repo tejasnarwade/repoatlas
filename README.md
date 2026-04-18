@@ -7,8 +7,9 @@ Instantly understand any GitHub codebase via an interactive architecture graph w
 ### 1. Configure API keys
 Edit `.env` in the project root:
 ```
-GOOGLE_API_KEY="your-gemini-api-key"
-GITHUB_ACCESS_TOKEN="your-github-token"  # optional, for private repos
+GOOGLE_API_KEY="AIzaSyBj4dsfW288bjHGT5wLuIL9SFWClug1H6E"
+GITHUB_ACCESS_TOKEN="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"
+
 ```
 
 ### 2. Backend
