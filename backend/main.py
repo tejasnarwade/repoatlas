@@ -47,6 +47,8 @@ class AnalyzeRequest(BaseModel):
 class QueryRequest(BaseModel):
     repo_url: str
     query: str
+    history: list[dict] = []
+    file_contexts: list[str] = []  # list of file IDs tagged with @
 
 class SummaryRequest(BaseModel):
     repo_url: str
@@ -59,14 +61,13 @@ def clone_repo(repo_url: str, dest: str):
     Repo.clone_from(url, dest, depth=1)
 
 def _call_ai(prompt: str, system: str = "You are an expert code assistant.") -> str:
-    """Call Groq first, fall back to Gemini. Returns text or raises."""
     if groq_client:
         resp = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": prompt}],
             temperature=0.2,
-            max_tokens=1024,
+            max_tokens=2048,
         )
         return resp.choices[0].message.content.strip()
     if genai_client:
@@ -74,15 +75,26 @@ def _call_ai(prompt: str, system: str = "You are an expert code assistant.") -> 
         return resp.text.strip()
     raise RuntimeError("No AI client configured")
 
-async def get_ai_summary(snippet: str, file_path: str, functions: list[str]) -> str:
+async def get_ai_summary(snippet: str, file_path: str, functions: list[str], last_commit: dict = None) -> str:
     if not groq_client and not genai_client:
         return f"File: {file_path}. Contains: {', '.join(functions[:5]) if functions else 'no named symbols'}."
+    lc = last_commit or {}
+    commit_line = (
+        f"Last commit: {lc['date']} by {lc['author']} — \"{lc['message']}\""
+        if lc else "Last commit: unknown"
+    )
     try:
         prompt = (
-            f"In 2-3 sentences, explain what this file does in plain English for a new developer.\n"
+            f"You are explaining a source file to a developer who is new to this codebase.\n"
             f"File: {file_path}\n"
-            f"Key symbols: {', '.join(functions[:10])}\n"
-            f"Code snippet:\n```\n{snippet[:800]}\n```"
+            f"Key symbols: {', '.join(functions[:15])}\n"
+            f"{commit_line}\n"
+            f"Code snippet:\n```\n{snippet[:1200]}\n```\n\n"
+            f"Write a clear explanation with three parts:\n"
+            f"1. PURPOSE (1-2 sentences): What is this file's overall role in the project? What problem does it solve?\n"
+            f"2. WHAT IT DOES (bullet points): For each key function/class listed above, explain in plain English what it does — no jargon, as if explaining to a junior developer.\n"
+            f"3. RECENT CHANGE (1 sentence): Based on the last commit message, briefly describe what was recently changed or added in this file.\n"
+            f"Keep it simple, specific, and useful."
         )
         return await asyncio.to_thread(_call_ai, prompt)
     except Exception:
@@ -108,10 +120,9 @@ async def analyze(req: AnalyzeRequest):
         shutil.rmtree(tmpdir, ignore_errors=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Generate AI summaries for top 20 high-impact nodes only (to stay fast)
     top_nodes = sorted(result["nodes"], key=lambda x: -x["impact"])[:20]
     summary_tasks = [
-        get_ai_summary(n["snippet"], n["path"], n["functions"])
+        get_ai_summary(n["snippet"], n["path"], n["functions"], n.get("last_commit"))
         for n in top_nodes
     ]
     summaries = await asyncio.gather(*summary_tasks)
@@ -130,7 +141,6 @@ async def query(req: QueryRequest):
         await analyze(AnalyzeRequest(repo_url=repo_url))
     result = _cache[repo_url]
 
-    # Build rich context: file list + summaries
     file_lines = []
     for n in result["nodes"]:
         summary = n.get("summary", "")
@@ -138,16 +148,42 @@ async def query(req: QueryRequest):
         file_lines.append(f"- {n['id']} (type={n['type']}, loc={n['loc']}, funcs=[{funcs}]){': ' + summary if summary else ''}")
     file_context = "\n".join(file_lines[:200])
 
+    # Build focused context for @-mentioned files
+    focused_context = ""
+    if req.file_contexts:
+        focused_parts = []
+        for fid in req.file_contexts:
+            node = next((n for n in result["nodes"] if n["id"] == fid or n["id"].endswith(fid) or fid in n["id"]), None)
+            if node:
+                funcs = ", ".join(node.get("functions", []))
+                lc = node.get("last_commit") or {}
+                commit_info = f", last commit: {lc.get('date','')} — {lc.get('message','')}" if lc else ""
+                focused_parts.append(
+                    f"=== @{node['id']} (type={node['type']}, {node['loc']} lines{commit_info}) ===\n"
+                    f"Functions/classes: {funcs}\n"
+                    f"Code:\n```\n{node['snippet'][:1500]}\n```"
+                )
+        if focused_parts:
+            focused_context = "\nFOCUSED FILE CONTEXT (user tagged these files with @):\n" + "\n\n".join(focused_parts) + "\n"
+
     if groq_client or genai_client:
         try:
+            history_text = ""
+            if req.history:
+                history_text = "Conversation so far:\n" + "\n".join(
+                    f"{m['role'].upper()}: {m['text']}" for m in req.history[-6:]
+                ) + "\n\n"
             prompt = (
                 f"You are an expert code assistant helping a developer understand a codebase.\n"
                 f"Here are the files with types, line counts, key functions, and summaries:\n\n"
-                f"{file_context}\n\n"
+                f"{file_context}\n"
+                f"{focused_context}"
+                f"{history_text}"
                 f"Developer question: \"{req.query}\"\n\n"
+                f"{'Since the user tagged specific files with @, focus your answer primarily on those files.' if focused_context else ''}\n"
                 f"Respond with a JSON object with exactly two keys:\n"
-                f"1. \"answer\": a clear 3-6 sentence explanation directly answering the question\n"
-                f"2. \"files\": array of the most relevant file paths from the list above (max 10, only files that truly relate)\n"
+                f"1. \"answer\": a clear detailed explanation directly answering the question. If @files were tagged, deeply analyse those files — explain what specific functions do, what improvements could be made, any bugs or issues you see.\n"
+                f"2. \"files\": array of the most relevant file paths from the list above (max 10)\n"
                 f"Return ONLY the raw JSON object. No markdown, no explanation outside JSON."
             )
             text = await asyncio.to_thread(_call_ai, prompt)
@@ -178,14 +214,13 @@ async def get_summary(req: SummaryRequest):
         raise HTTPException(status_code=404, detail="File not found.")
     if node["summary"]:
         return {"summary": node["summary"]}
-    summary = await get_ai_summary(node["snippet"], node["path"], node["functions"])
+    summary = await get_ai_summary(node["snippet"], node["path"], node["functions"], node.get("last_commit"))
     node["summary"] = summary
     return {"summary": summary}
 
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
-
 
 class SecretsRequest(BaseModel):
     repo_url: str
@@ -196,7 +231,6 @@ async def scan_secrets(req: SecretsRequest):
     if repo_url not in _cache:
         await analyze(AnalyzeRequest(repo_url=repo_url))
 
-    # Re-clone to a temp dir for scanning (cache only stores graph data, not files)
     tmpdir = tempfile.mkdtemp()
     try:
         clone_repo(repo_url, tmpdir)

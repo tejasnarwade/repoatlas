@@ -3,7 +3,9 @@ import os
 import re
 from pathlib import Path
 from collections import defaultdict
+from datetime import timezone
 import networkx as nx
+from git import Repo
 
 SUPPORTED_EXTS = {".py", ".js", ".ts", ".jsx", ".tsx"}
 
@@ -119,11 +121,32 @@ def classify_file(filepath: str, rel_path: str) -> str:
         return "payment"
     return "module"
 
+def get_commit_times(repo_path: str, files: list[str]) -> dict:
+    """Returns {rel_path: {date, message, author}} for each file."""
+    result = {}
+    try:
+        repo = Repo(repo_path)
+        for fp in files:
+            rel = os.path.relpath(fp, repo_path)
+            try:
+                commit = next(repo.iter_commits(paths=rel, max_count=1))
+                result[rel] = {
+                    "date": commit.committed_datetime.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                    "message": commit.message.strip().splitlines()[0][:80],
+                    "author": commit.author.name,
+                }
+            except StopIteration:
+                pass
+    except Exception:
+        pass
+    return result
+
 def build_graph(repo_path: str) -> dict:
     files = get_all_files(repo_path)
     if not files:
         return {"nodes": [], "edges": [], "stats": {}}
 
+    commit_times = get_commit_times(repo_path, files)
     G = nx.DiGraph()
     file_data = {}
 
@@ -150,6 +173,7 @@ def build_graph(repo_path: str) -> dict:
             "snippet": snippet,
             "loc": loc,
             "size": size,
+            "last_commit": commit_times.get(rel),
         }
         G.add_node(rel)
 
@@ -188,6 +212,7 @@ def build_graph(repo_path: str) -> dict:
             "in_degree": in_degree.get(rel, 0),
             "out_degree": out_degree.get(rel, 0),
             "summary": "",
+            "last_commit": data["last_commit"],
         })
 
     edges = [{"source": u, "target": v} for u, v in G.edges()]

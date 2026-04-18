@@ -17,7 +17,6 @@ export default function StatsBar({ stats, nodes, onFilterType, activeFilter }) {
           { icon: <Files size={13} />, val: stats.total_files, label: 'files' },
           { icon: <GitBranch size={13} />, val: stats.total_edges, label: 'deps' },
           { icon: <Zap size={13} color="#f59e0b" />, val: highImpact, label: 'high impact' },
-          { icon: <Layers size={13} />, val: stats.languages?.length, label: 'languages' },
         ].map((s, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#64748b' }}>
             {s.icon}
@@ -25,6 +24,21 @@ export default function StatsBar({ stats, nodes, onFilterType, activeFilter }) {
             <span>{s.label}</span>
           </div>
         ))}
+        {stats.languages?.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#64748b' }}>
+            <Layers size={13} />
+            <span style={{ fontWeight: 700, color: '#94a3b8' }}>{stats.languages.length}</span>
+            <span>lang{stats.languages.length > 1 ? 's' : ''}</span>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginLeft: 2 }}>
+              {stats.languages.map(lang => (
+                <span key={lang} style={{
+                  background: '#151d35', border: '1px solid #1e2d4a',
+                  borderRadius: 10, padding: '1px 7px', fontSize: 11, color: '#94a3b8',
+                }}>{lang}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Divider */}
