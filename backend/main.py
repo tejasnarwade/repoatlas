@@ -11,6 +11,7 @@ from google import genai
 from google.genai import types as genai_types
 from git import Repo, GitCommandError
 from analyzer import build_graph, nl_query_subgraph
+from secrets_scanner import scan_repo_for_secrets
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -171,3 +172,24 @@ async def get_summary(req: SummaryRequest):
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+class SecretsRequest(BaseModel):
+    repo_url: str
+
+@app.post("/api/secrets")
+async def scan_secrets(req: SecretsRequest):
+    repo_url = req.repo_url.strip().rstrip("/")
+    if repo_url not in _cache:
+        await analyze(AnalyzeRequest(repo_url=repo_url))
+
+    # Re-clone to a temp dir for scanning (cache only stores graph data, not files)
+    tmpdir = tempfile.mkdtemp()
+    try:
+        clone_repo(repo_url, tmpdir)
+        findings = await asyncio.to_thread(scan_repo_for_secrets, tmpdir)
+        return {"findings": findings, "total": len(findings)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        shutil.rmtree(tmpdir, ignore_errors=True)

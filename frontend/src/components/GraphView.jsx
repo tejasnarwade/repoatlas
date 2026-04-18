@@ -10,8 +10,9 @@ import OnboardingPanel from './OnboardingPanel';
 import StatsBar from './StatsBar';
 import QueryBar from './QueryBar';
 import Legend from './Legend';
+import SecretsPanel from './SecretsPanel';
 import { getTypeConfig } from '../constants';
-import { Map, BookOpen, X, RotateCcw } from 'lucide-react';
+import { Map, BookOpen, X, RotateCcw, ShieldAlert } from 'lucide-react';
 
 const NODE_TYPES = { archNode: ArchNode };
 
@@ -47,6 +48,7 @@ export default function GraphView({ data, repoUrl, onReset }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSecrets, setShowSecrets] = useState(false);
   const [filterType, setFilterType] = useState(null);
   const [highlighted, setHighlighted] = useState(null); // set of node ids
 
@@ -175,6 +177,15 @@ export default function GraphView({ data, repoUrl, onReset }) {
             Onboarding Path
           </button>
 
+          <button
+            className="btn btn-ghost"
+            onClick={() => { setShowSecrets(v => !v); setSelectedNode(null); }}
+            style={{ fontSize: 12, borderColor: showSecrets ? '#ef4444' : undefined, color: showSecrets ? '#ef4444' : undefined }}
+          >
+            <ShieldAlert size={13} />
+            Secret Scan
+          </button>
+
           <button className="btn btn-ghost" onClick={onReset} style={{ fontSize: 12 }}>
             <RotateCcw size={13} /> New Repo
           </button>
@@ -249,7 +260,7 @@ export default function GraphView({ data, repoUrl, onReset }) {
         )}
 
         {/* Detail panel */}
-        {selectedNode && (
+        {selectedNode && !showSecrets && (
           <DetailPanel
             node={selectedNode}
             repoUrl={repoUrl}
@@ -257,6 +268,15 @@ export default function GraphView({ data, repoUrl, onReset }) {
             allNodes={data.nodes}
             onClose={() => setSelectedNode(null)}
             onNodeClick={focusNode}
+          />
+        )}
+
+        {/* Secrets panel */}
+        {showSecrets && (
+          <SecretsPanel
+            repoUrl={repoUrl}
+            onClose={() => setShowSecrets(false)}
+            onHighlightFiles={(files) => handleQueryResults(files)}
           />
         )}
       </div>
