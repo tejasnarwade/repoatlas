@@ -39,7 +39,9 @@ export default function QueryBar({ repoUrl, onResults, onClear }) {
       const { data } = await axios.post(`${API}/api/query`, { repo_url: repoUrl, query: q });
       const botMsg = {
         role: 'bot',
-        text: data.answer || 'Here are the most relevant files I found:',
+        text: data.answer || (data.highlighted?.length > 0
+          ? `Found ${data.highlighted.length} relevant file(s) for "${q}". No AI key configured or quota exceeded — showing keyword matches only.`
+          : 'No relevant files found for that query.'),
         files: data.highlighted || [],
       };
       setMessages(prev => [...prev, botMsg]);

@@ -60,7 +60,7 @@ async def get_ai_summary(snippet: str, file_path: str, functions: list[str]) -> 
         )
         resp = await asyncio.to_thread(
             genai_client.models.generate_content,
-            model="gemini-1.5-flash",
+            model="gemini-2.0-flash",
             contents=prompt,
         )
         return resp.text.strip()
@@ -132,23 +132,32 @@ async def query(req: QueryRequest):
                 f"Example: {{\"answer\": \"Auth is handled in...\", \"files\": [\"src/auth.py\"]}}\n"
                 f"Return ONLY the JSON object, no markdown fences."
             )
-            resp = await asyncio.to_thread(
-                genai_client.models.generate_content,
-                model="gemini-1.5-flash",
-                contents=prompt,
-            )
+            for model in ["gemini-2.0-flash", "gemini-2.5-flash"]:
+                try:
+                    resp = await asyncio.to_thread(
+                        genai_client.models.generate_content,
+                        model=model,
+                        contents=prompt,
+                    )
+                    break
+                except Exception as me:
+                    if "429" in str(me) or "quota" in str(me).lower():
+                        continue
+                    raise
             text = resp.text.strip()
             # Strip markdown code fences if present
             text = re.sub(r'^```(?:json)?\s*', '', text, flags=_re.MULTILINE)
             text = re.sub(r'```\s*$', '', text, flags=_re.MULTILINE).strip()
-            parsed = _json.loads(text)
-            return {
-                "answer": parsed.get("answer", ""),
-                "highlighted": parsed.get("files", []),
-                "query": req.query,
-            }
-        except Exception as e:
-            # Fallback: keyword match + no answer
+            # Find the JSON object even if there's surrounding text
+            json_match = _re.search(r'\{.*\}', text, _re.DOTALL)
+            if json_match:
+                parsed = _json.loads(json_match.group())
+                return {
+                    "answer": parsed.get("answer", ""),
+                    "highlighted": parsed.get("files", []),
+                    "query": req.query,
+                }
+        except Exception:
             pass
 
     highlighted = nl_query_subgraph(req.query, result["nodes"], result["edges"])
