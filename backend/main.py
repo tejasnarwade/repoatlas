@@ -104,8 +104,9 @@ async def analyze(req: AnalyzeRequest):
 @app.post("/api/query")
 async def query(req: QueryRequest):
     repo_url = req.repo_url.strip().rstrip("/")
+    # Auto re-analyze if cache was lost (e.g. server restart)
     if repo_url not in _cache:
-        raise HTTPException(status_code=404, detail="Repo not analyzed yet. Run /api/analyze first.")
+        await analyze(AnalyzeRequest(repo_url=repo_url))
     result = _cache[repo_url]
 
     # Try AI-powered query first

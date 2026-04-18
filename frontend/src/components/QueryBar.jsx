@@ -15,9 +15,15 @@ export default function QueryBar({ repoUrl, onResults, onClear }) {
     setLoading(true);
     try {
       const { data } = await axios.post(`${API}/api/query`, { repo_url: repoUrl, query });
-      onResults(data.highlighted);
-      setActive(true);
-    } catch { }
+      if (data.highlighted && data.highlighted.length > 0) {
+        onResults(data.highlighted);
+        setActive(true);
+      } else {
+        alert('No matching files found for that query.');
+      }
+    } catch (err) {
+      alert('Query failed: ' + (err.response?.data?.detail || err.message));
+    }
     setLoading(false);
   }
 
