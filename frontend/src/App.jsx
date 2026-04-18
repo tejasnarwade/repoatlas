@@ -1,28 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
 import GraphView from './components/GraphView';
+import { onAuthChange, firebaseLogout } from './firebase';
 
 const API = 'http://localhost:8000';
 
-function getStoredUser() {
-  try { return JSON.parse(localStorage.getItem('repoatlas_user') || 'null'); }
-  catch { return null; }
-}
-
 export default function App() {
-  const [user, setUser] = useState(getStoredUser);
-  const [state, setState] = useState('home'); // home | loading | graph | error
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false); // wait for Firebase to resolve
+  const [state, setState] = useState('home');
   const [data, setData] = useState(null);
   const [repoUrl, setRepoUrl] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState('');
 
+  // Listen to Firebase auth state — persists across page refreshes
+  useEffect(() => {
+    const unsub = onAuthChange((u) => {
+      setUser(u);
+      setAuthReady(true);
+    });
+    return unsub;
+  }, []);
+
   function handleLogin(u) { setUser(u); setState('home'); }
 
-  function handleLogout() {
-    localStorage.removeItem('repoatlas_user');
+  async function handleLogout() {
+    await firebaseLogout();
     setUser(null);
     setState('home');
     setData(null);
@@ -59,7 +65,16 @@ export default function App() {
     }
   }
 
-  // Not logged in → show auth
+  // Show nothing while Firebase resolves auth state (avoids flash of login screen)
+  if (!authReady) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0e1a' }}>
+        <div className="spinner" style={{ width: 28, height: 28 }} />
+      </div>
+    );
+  }
+
+  // Not logged in → auth page
   if (!user) return <AuthPage onLogin={handleLogin} />;
 
   // Graph view
@@ -79,11 +94,10 @@ export default function App() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top bar with user info */}
+      {/* Top bar */}
       <div style={{
         height: 48, display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-        padding: '0 20px', borderBottom: '1px solid #1e2d4a', background: '#0a0e1a',
-        flexShrink: 0,
+        padding: '0 20px', borderBottom: '1px solid #1e2d4a', background: '#0a0e1a', flexShrink: 0,
       }}>
         <UserMenu user={user} onLogout={handleLogout} />
       </div>
@@ -106,12 +120,8 @@ export default function App() {
             </svg>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>
-              Analyzing Repository
-            </div>
-            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>
-              {repoUrl.replace('https://github.com/', '')}
-            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>Analyzing Repository</div>
+            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 20 }}>{repoUrl.replace('https://github.com/', '')}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center' }}>
               <div className="spinner" />
               <span style={{ fontSize: 13, color: '#94a3b8' }}>{progress}</span>
@@ -125,10 +135,7 @@ export default function App() {
           </div>
         </div>
       ) : state === 'error' ? (
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 16,
-        }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           <div style={{ fontSize: 32 }}>⚠️</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#ef4444' }}>Analysis Failed</div>
           <div style={{
@@ -138,7 +145,7 @@ export default function App() {
           <button className="btn btn-primary" onClick={() => setState('home')}>Try Again</button>
         </div>
       ) : (
-        <LandingPage onAnalyze={handleAnalyze} loading={state === 'loading'} user={user} />
+        <LandingPage onAnalyze={handleAnalyze} loading={false} user={user} />
       )}
     </div>
   );
@@ -184,7 +191,7 @@ function UserMenu({ user, onLogout }) {
           <button onClick={() => { setOpen(false); onLogout(); }} style={{
             width: '100%', background: 'none', border: 'none', cursor: 'pointer',
             padding: '10px 14px', textAlign: 'left', fontSize: 13, color: '#ef4444',
-            display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.15s',
+            display: 'flex', alignItems: 'center', gap: 8,
           }}
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
             onMouseLeave={e => e.currentTarget.style.background = 'none'}
