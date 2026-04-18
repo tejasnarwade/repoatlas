@@ -2,5 +2,7 @@ fastapi
 uvicorn[standard]
 gitpython
 google-generativeai
+google-genai
+groq
 python-dotenv
 networkx

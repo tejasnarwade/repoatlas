@@ -2,13 +2,12 @@ import os
 import shutil
 import tempfile
 import asyncio
-from pathlib import Path
+import json as _json
+import re as _re
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from google import genai
-from google.genai import types as genai_types
 from git import Repo, GitCommandError
 from analyzer import build_graph, nl_query_subgraph
 from secrets_scanner import scan_repo_for_secrets
@@ -23,10 +22,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+GROQ_API_KEY   = os.getenv("GROQ_API_KEY", "")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-GITHUB_TOKEN = os.getenv("GITHUB_ACCESS_TOKEN", "")
+GITHUB_TOKEN   = os.getenv("GITHUB_ACCESS_TOKEN", "")
 
-genai_client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+try:
+    from groq import Groq
+    groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
+except ImportError:
+    groq_client = None
+
+try:
+    from google import genai as _genai
+    genai_client = _genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
+except Exception:
+    genai_client = None
 
 # In-memory cache: repo_url -> analysis result
 _cache: dict = {}
@@ -48,8 +58,24 @@ def clone_repo(repo_url: str, dest: str):
         url = url.replace("https://", f"https://{GITHUB_TOKEN}@")
     Repo.clone_from(url, dest, depth=1)
 
+def _call_ai(prompt: str, system: str = "You are an expert code assistant.") -> str:
+    """Call Groq first, fall back to Gemini. Returns text or raises."""
+    if groq_client:
+        resp = groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": prompt}],
+            temperature=0.2,
+            max_tokens=1024,
+        )
+        return resp.choices[0].message.content.strip()
+    if genai_client:
+        resp = genai_client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+        return resp.text.strip()
+    raise RuntimeError("No AI client configured")
+
 async def get_ai_summary(snippet: str, file_path: str, functions: list[str]) -> str:
-    if not genai_client:
+    if not groq_client and not genai_client:
         return f"File: {file_path}. Contains: {', '.join(functions[:5]) if functions else 'no named symbols'}."
     try:
         prompt = (
@@ -58,12 +84,7 @@ async def get_ai_summary(snippet: str, file_path: str, functions: list[str]) -> 
             f"Key symbols: {', '.join(functions[:10])}\n"
             f"Code snippet:\n```\n{snippet[:800]}\n```"
         )
-        resp = await asyncio.to_thread(
-            genai_client.models.generate_content,
-            model="gemini-2.0-flash",
-            contents=prompt,
-        )
-        return resp.text.strip()
+        return await asyncio.to_thread(_call_ai, prompt)
     except Exception:
         return f"File: {file_path}. Contains: {', '.join(functions[:5]) if functions else 'no named symbols'}."
 
@@ -109,8 +130,6 @@ async def query(req: QueryRequest):
         await analyze(AnalyzeRequest(repo_url=repo_url))
     result = _cache[repo_url]
 
-    import json as _json, re as _re
-
     # Build rich context: file list + summaries
     file_lines = []
     for n in result["nodes"]:
@@ -119,36 +138,21 @@ async def query(req: QueryRequest):
         file_lines.append(f"- {n['id']} (type={n['type']}, loc={n['loc']}, funcs=[{funcs}]){': ' + summary if summary else ''}")
     file_context = "\n".join(file_lines[:200])
 
-    if genai_client:
+    if groq_client or genai_client:
         try:
             prompt = (
                 f"You are an expert code assistant helping a developer understand a codebase.\n"
-                f"Here is the list of files with their types, line counts, key functions, and AI summaries:\n\n"
+                f"Here are the files with types, line counts, key functions, and summaries:\n\n"
                 f"{file_context}\n\n"
                 f"Developer question: \"{req.query}\"\n\n"
                 f"Respond with a JSON object with exactly two keys:\n"
-                f"1. \"answer\": a clear, helpful 3-6 sentence explanation answering the question\n"
-                f"2. \"files\": a JSON array of the most relevant file paths from the list above (max 15)\n"
-                f"Example: {{\"answer\": \"Auth is handled in...\", \"files\": [\"src/auth.py\"]}}\n"
-                f"Return ONLY the JSON object, no markdown fences."
+                f"1. \"answer\": a clear 3-6 sentence explanation directly answering the question\n"
+                f"2. \"files\": array of the most relevant file paths from the list above (max 10, only files that truly relate)\n"
+                f"Return ONLY the raw JSON object. No markdown, no explanation outside JSON."
             )
-            for model in ["gemini-2.0-flash", "gemini-2.5-flash"]:
-                try:
-                    resp = await asyncio.to_thread(
-                        genai_client.models.generate_content,
-                        model=model,
-                        contents=prompt,
-                    )
-                    break
-                except Exception as me:
-                    if "429" in str(me) or "quota" in str(me).lower():
-                        continue
-                    raise
-            text = resp.text.strip()
-            # Strip markdown code fences if present
-            text = re.sub(r'^```(?:json)?\s*', '', text, flags=_re.MULTILINE)
-            text = re.sub(r'```\s*$', '', text, flags=_re.MULTILINE).strip()
-            # Find the JSON object even if there's surrounding text
+            text = await asyncio.to_thread(_call_ai, prompt)
+            text = _re.sub(r'^```(?:json)?\s*', '', text, flags=_re.MULTILINE)
+            text = _re.sub(r'```\s*$', '', text, flags=_re.MULTILINE).strip()
             json_match = _re.search(r'\{.*\}', text, _re.DOTALL)
             if json_match:
                 parsed = _json.loads(json_match.group())
