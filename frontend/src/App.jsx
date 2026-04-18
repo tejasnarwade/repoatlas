@@ -1,16 +1,33 @@
 import { useState } from 'react';
 import axios from 'axios';
+import AuthPage from './components/AuthPage';
 import LandingPage from './components/LandingPage';
 import GraphView from './components/GraphView';
 
 const API = 'http://localhost:8000';
 
+function getStoredUser() {
+  try { return JSON.parse(localStorage.getItem('repoatlas_user') || 'null'); }
+  catch { return null; }
+}
+
 export default function App() {
-  const [state, setState] = useState('landing'); // landing | loading | graph | error
+  const [user, setUser] = useState(getStoredUser);
+  const [state, setState] = useState('home'); // home | loading | graph | error
   const [data, setData] = useState(null);
   const [repoUrl, setRepoUrl] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState('');
+
+  function handleLogin(u) { setUser(u); setState('home'); }
+
+  function handleLogout() {
+    localStorage.removeItem('repoatlas_user');
+    setUser(null);
+    setState('home');
+    setData(null);
+    setRepoUrl('');
+  }
 
   async function handleAnalyze(url) {
     setState('loading');
@@ -42,16 +59,35 @@ export default function App() {
     }
   }
 
+  // Not logged in → show auth
+  if (!user) return <AuthPage onLogin={handleLogin} />;
+
+  // Graph view
   if (state === 'graph' && data) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <GraphView data={data} repoUrl={repoUrl} onReset={() => setState('landing')} />
+        <GraphView
+          data={data}
+          repoUrl={repoUrl}
+          user={user}
+          onLogout={handleLogout}
+          onReset={() => setState('home')}
+        />
       </div>
     );
   }
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Top bar with user info */}
+      <div style={{
+        height: 48, display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
+        padding: '0 20px', borderBottom: '1px solid #1e2d4a', background: '#0a0e1a',
+        flexShrink: 0,
+      }}>
+        <UserMenu user={user} onLogout={handleLogout} />
+      </div>
+
       {state === 'loading' ? (
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
@@ -99,10 +135,66 @@ export default function App() {
             background: '#0f1629', border: '1px solid #1e2d4a', borderRadius: 10,
             padding: 16, fontSize: 13, color: '#94a3b8', maxWidth: 480, textAlign: 'center',
           }}>{error}</div>
-          <button className="btn btn-primary" onClick={() => setState('landing')}>Try Again</button>
+          <button className="btn btn-primary" onClick={() => setState('home')}>Try Again</button>
         </div>
       ) : (
-        <LandingPage onAnalyze={handleAnalyze} loading={state === 'loading'} />
+        <LandingPage onAnalyze={handleAnalyze} loading={state === 'loading'} user={user} />
+      )}
+    </div>
+  );
+}
+
+function UserMenu({ user, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const initials = user.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || 'U';
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(v => !v)} style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        background: '#151d35', border: '1px solid #1e2d4a', borderRadius: 20,
+        padding: '4px 12px 4px 4px', cursor: 'pointer', transition: 'border-color 0.15s',
+      }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = '#2a3f6a'}
+        onMouseLeave={e => e.currentTarget.style.borderColor = '#1e2d4a'}
+      >
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 11, fontWeight: 700, color: 'white',
+        }}>{initials}</div>
+        <span style={{ fontSize: 13, color: '#94a3b8', fontWeight: 500 }}>{user.name?.split(' ')[0]}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: '100%', marginTop: 6,
+          background: '#0f1629', border: '1px solid #1e2d4a', borderRadius: 10,
+          minWidth: 180, zIndex: 100, overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        }}>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid #1e2d4a' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{user.name}</div>
+            <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{user.email}</div>
+          </div>
+          <button onClick={() => { setOpen(false); onLogout(); }} style={{
+            width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+            padding: '10px 14px', textAlign: 'left', fontSize: 13, color: '#ef4444',
+            display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.15s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Sign out
+          </button>
+        </div>
       )}
     </div>
   );

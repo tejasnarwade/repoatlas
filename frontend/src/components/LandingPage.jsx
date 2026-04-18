@@ -7,7 +7,7 @@ const EXAMPLES = [
   'https://github.com/expressjs/express',
 ];
 
-export default function LandingPage({ onAnalyze, loading }) {
+export default function LandingPage({ onAnalyze, loading, user }) {
   const [url, setUrl] = useState('');
 
   function handleSubmit(e) {
@@ -41,8 +41,8 @@ export default function LandingPage({ onAnalyze, loading }) {
         </div>
 
         <p style={{ fontSize: 16, color: '#64748b', lineHeight: 1.7, marginBottom: 8 }}>
-          Instantly understand any codebase. Paste a GitHub URL to generate an
-          <span style={{ color: '#94a3b8' }}> interactive architecture graph</span> with
+          {user ? <>Welcome back, <span style={{ color: '#94a3b8' }}>{user.name.split(' ')[0]}</span>! Paste a GitHub URL to generate an </> : 'Instantly understand any codebase. Paste a GitHub URL to generate an '}
+          <span style={{ color: '#94a3b8' }}>interactive architecture graph</span> with
           AI-powered explanations, dependency maps, and a guided onboarding path.
         </p>
       </div>

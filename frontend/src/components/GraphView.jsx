@@ -43,7 +43,7 @@ function layoutNodes(nodes, edges) {
   return positioned;
 }
 
-export default function GraphView({ data, repoUrl, onReset }) {
+export default function GraphView({ data, repoUrl, user, onLogout, onReset }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -189,6 +189,29 @@ export default function GraphView({ data, repoUrl, onReset }) {
           <button className="btn btn-ghost" onClick={onReset} style={{ fontSize: 12 }}>
             <RotateCcw size={13} /> New Repo
           </button>
+
+          {user && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 4 }}>
+              <div style={{ width: 1, height: 20, background: '#1e2d4a' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6,
+                background: '#151d35', border: '1px solid #1e2d4a', borderRadius: 20,
+                padding: '3px 10px 3px 4px',
+              }}>
+                <div style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 10, fontWeight: 700, color: 'white',
+                }}>
+                  {user.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>{user.name?.split(' ')[0]}</span>
+              </div>
+              <button className="btn btn-ghost" onClick={onLogout} style={{ fontSize: 12, padding: '4px 10px' }}>
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Row 2: stats */}
