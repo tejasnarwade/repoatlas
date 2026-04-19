@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import LandingPage from './components/LandingPage';
 import GraphView from './components/GraphView';
@@ -9,12 +9,47 @@ export default function App() {
   const [state, setState] = useState('landing'); // landing | loading | graph | error
   const [data, setData] = useState(null);
   const [repoUrl, setRepoUrl] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [error, setError] = useState('');
   const [progress, setProgress] = useState('');
+  const [githubUser, setGithubUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gh_user') || 'null'); } catch { return null; }
+  });
+  const [githubToken, setGithubToken] = useState(() => localStorage.getItem('gh_token') || '');
 
-  async function handleAnalyze(url) {
+  // Handle GitHub OAuth callback: /auth/callback?code=...
+  useEffect(() => {
+    if (!window.location.pathname.startsWith('/auth/callback')) return;
+    const code = new URLSearchParams(window.location.search).get('code');
+    if (!code) return;
+
+    // Clean URL immediately so refresh doesn't re-trigger
+    window.history.replaceState({}, '', '/');
+
+    axios.post(`${API}/api/auth/github`, { code })
+      .then(({ data }) => {
+        localStorage.setItem('gh_token', data.access_token);
+        localStorage.setItem('gh_user', JSON.stringify(data.user));
+        setGithubToken(data.access_token);
+        setGithubUser(data.user);
+      })
+      .catch(err => {
+        setError(err.response?.data?.detail || 'GitHub authentication failed.');
+        setState('error');
+      });
+  }, []);
+
+  function handleGithubLogout() {
+    localStorage.removeItem('gh_token');
+    localStorage.removeItem('gh_user');
+    setGithubToken('');
+    setGithubUser(null);
+  }
+
+  async function handleAnalyze(url, token = '') {
     setState('loading');
     setRepoUrl(url);
+    setIsPrivate(!!(token || githubToken));
     setError('');
 
     const steps = [
@@ -31,7 +66,11 @@ export default function App() {
     }, 4000);
 
     try {
-      const { data: result } = await axios.post(`${API}/api/analyze`, { repo_url: url }, { timeout: 180000 });
+      const { data: result } = await axios.post(
+        `${API}/api/analyze`,
+        { repo_url: url, token: token || githubToken || '', is_private: !!(token || githubToken) },
+        { timeout: 300000 }
+      );
       clearInterval(interval);
       setData(result);
       setState('graph');
@@ -45,7 +84,7 @@ export default function App() {
   if (state === 'graph' && data) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <GraphView data={data} repoUrl={repoUrl} onReset={() => setState('landing')} />
+        <GraphView data={data} repoUrl={repoUrl} onReset={() => setState('landing')} isPrivate={isPrivate} githubToken={githubToken} />
       </div>
     );
   }
@@ -102,7 +141,13 @@ export default function App() {
           <button className="btn btn-primary" onClick={() => setState('landing')}>Try Again</button>
         </div>
       ) : (
-        <LandingPage onAnalyze={handleAnalyze} loading={state === 'loading'} />
+        <LandingPage
+          onAnalyze={handleAnalyze}
+          loading={state === 'loading'}
+          githubUser={githubUser}
+          githubToken={githubToken}
+          onGithubLogout={handleGithubLogout}
+        />
       )}
     </div>
   );

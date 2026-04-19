@@ -8,5 +8,7 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8000',
     },
+    // Serve index.html for all routes so /auth/callback works
+    historyApiFallback: true,
   },
 })

@@ -17,4 +17,15 @@ export const getTypeConfig = (type) => TYPE_CONFIG[type] || TYPE_CONFIG.module;
 export const EXT_LANG = {
   '.py': 'Python', '.js': 'JavaScript', '.ts': 'TypeScript',
   '.jsx': 'React JSX', '.tsx': 'React TSX',
+  '.html': 'HTML', '.css': 'CSS', '.scss': 'SCSS', '.sass': 'Sass', '.less': 'Less',
+  '.java': 'Java', '.kt': 'Kotlin', '.go': 'Go', '.rb': 'Ruby',
+  '.php': 'PHP', '.cs': 'C#', '.cpp': 'C++', '.c': 'C', '.h': 'C Header',
+  '.rs': 'Rust', '.swift': 'Swift', '.scala': 'Scala', '.lua': 'Lua',
+  '.json': 'JSON', '.yaml': 'YAML', '.yml': 'YAML', '.toml': 'TOML',
+  '.xml': 'XML', '.env': 'Env', '.ini': 'INI', '.cfg': 'Config', '.conf': 'Config',
+  '.sh': 'Shell', '.bash': 'Bash', '.zsh': 'Zsh', '.fish': 'Fish', '.ps1': 'PowerShell',
+  '.md': 'Markdown', '.mdx': 'MDX', '.rst': 'reStructuredText', '.txt': 'Text',
+  '.sql': 'SQL', '.vue': 'Vue', '.svelte': 'Svelte',
+  '.graphql': 'GraphQL', '.gql': 'GraphQL', '.proto': 'Protobuf',
+  '.r': 'R',
 };

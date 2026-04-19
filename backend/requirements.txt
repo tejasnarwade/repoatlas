@@ -6,3 +6,7 @@ google-genai
 groq
 python-dotenv
 networkx
+httpx
+neo4j
+pyzipper
+fpdf2

@@ -13,7 +13,7 @@ const SUGGESTIONS = [
   'What are the utility helpers?',
 ];
 
-export default function QueryBar({ repoUrl, onResults, onClear, allNodes = [] }) {
+export default function QueryBar({ repoUrl, onResults, onClear, allNodes = [], isPrivate = false }) {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -100,6 +100,7 @@ export default function QueryBar({ repoUrl, onResults, onClear, allNodes = [] })
         query: q || `Explain this file`,
         history: messages,
         file_contexts: taggedFiles.map(f => f.id),
+        is_private: isPrivate,
       });
       const botMsg = {
         role: 'bot',
@@ -313,12 +314,10 @@ export default function QueryBar({ repoUrl, onResults, onClear, allNodes = [] })
                     borderRadius: msg.role === 'user' ? '12px 4px 12px 12px' : '4px 12px 12px 12px',
                     padding: '10px 14px',
                   }}>
-                    <p style={{
-                      fontSize: 13, color: msg.error ? '#ef4444' : '#e2e8f0',
-                      lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap',
-                    }}>
-                      {msg.text}
-                    </p>
+                    {msg.role === 'bot' && !msg.error
+                      ? <BotAnswer text={msg.text} />
+                      : <p style={{ fontSize: 13, color: msg.error ? '#ef4444' : '#e2e8f0', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>{msg.text}</p>
+                    }
                   </div>
 
                   {msg.files?.length > 0 && (
@@ -375,6 +374,32 @@ export default function QueryBar({ repoUrl, onResults, onClear, allNodes = [] })
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Renders bot answer — highlights file references inline as blue chips
+function BotAnswer({ text }) {
+  if (!text) return null;
+  const FILE_RE = /((?:[\w.\-]+\/)*[\w\-]+\.(?:py|js|ts|jsx|tsx|go|java|rb|php|cs|cpp|c|h|rs|swift|vue|svelte|sql|sh|bash|md|json|yaml|yml|html|css|scss|toml|env))/g;
+  const parts = text.split(FILE_RE);
+  return (
+    <div style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      {parts.map((part, i) => {
+        if (i % 2 === 1) {
+          return (
+            <code key={i} style={{
+              background: 'rgba(59,130,246,0.12)',
+              border: '1px solid rgba(59,130,246,0.25)',
+              borderRadius: 4, padding: '1px 5px',
+              fontSize: 12, color: '#60a5fa',
+              fontFamily: 'monospace',
+              whiteSpace: 'nowrap',
+            }}>{part}</code>
+          );
+        }
+        return <span key={i}>{part}</span>;
+      })}
     </div>
   );
 }
