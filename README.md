@@ -162,27 +162,14 @@ Ollama runs as a background service on `http://localhost:11434` automatically af
 
 ### 4. Set up Neo4j
 
-**Option A — Neo4j Desktop (recommended):**
-1. Download from [neo4j.com/download](https://neo4j.com/download)
-2. Create a new project → Add → Local DBMS
-3. Set password → Start the database
-4. Default bolt URI: `bolt://localhost:7687`
+1. Download **Neo4j Desktop** from [neo4j.com/download](https://neo4j.com/download)
+2. Install and open Neo4j Desktop
+3. Click **New Project** → **Add** → **Local DBMS**
+4. Give it a name, set a password, click **Create**
+5. Click **Start** to start the database
+6. The default bolt URI is `bolt://localhost:7687` — put your password in `.env` as `NEO4J_PASSWORD`
 
-**Option B — Docker:**
-```bash
-docker run \
-  --name neo4j \
-  -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/your_neo4j_password \
-  -d neo4j:latest
-```
-
-**Option C — Neo4j AuraDB (cloud free tier):**
-1. Go to [console.neo4j.io](https://console.neo4j.io)
-2. Create a free instance
-3. Copy the connection URI and credentials into `.env`
-
-Verify Neo4j is running by opening `http://localhost:7474` in your browser.
+Verify Neo4j is running by opening `http://localhost:7474` in your browser — you should see the Neo4j browser UI.
 
 ---
 
@@ -229,12 +216,7 @@ You need **4 things running** at the same time. Open 3 terminals.
 
 ### Terminal 1 — Neo4j
 
-If using Neo4j Desktop: start the database from the UI.
-
-If using Docker:
-```bash
-docker start neo4j
-```
+Open **Neo4j Desktop** and click **Start** on your local DBMS.
 
 Verify: open `http://localhost:7474` — you should see the Neo4j browser.
 
