@@ -3,6 +3,11 @@
 AI-powered repository intelligence platform. Clone any GitHub repo and instantly get an interactive dependency graph, AI file summaries, natural language queries, architecture evolution timeline, and a real-time secret/API key scanner — all running 100% locally.
 
 ---
+DEVELOPERS:
+- Divya Belokar
+- Pranshu Tiwari
+- Sanika Patil
+- Tejas Narwade
 
 ## Features
 
