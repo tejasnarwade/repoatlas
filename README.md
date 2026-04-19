@@ -8,6 +8,7 @@ DEVELOPERS:
 - Pranshu Tiwari
 - Sanika Patil
 - Tejas Narwade
+- Shubham Kushwaha
 
 ## Features
 
