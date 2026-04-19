@@ -25,6 +25,10 @@ DEVELOPERS:
 
 ---
 
+Video Demo : (by Team IIT Pimpri)
+https://drive.google.com/file/d/14RAqEb62d5wjNJYz8Hq29_5pniHa34EH/view?usp=drive_link
+---
+
 ## Tech Stack
 
 | Layer | Technology |
