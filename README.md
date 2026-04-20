@@ -7,8 +7,9 @@ DEVELOPERS:
 - Divya Belokar
 - Pranshu Tiwari
 - Sanika Patil
-- Tejas Narwade
 - Shubham Kushwaha
+- Tejas Narwade
+
 
 ## Features
 
